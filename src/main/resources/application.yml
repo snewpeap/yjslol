@@ -1,0 +1,8 @@
+spring:
+  jackson:
+    time-zone: GMT+8
+  thymeleaf:
+    cache: false
+
+server:
+  port: 8196

@@ -1,13 +1,16 @@
+package yjslol.spark;
+
 import com.mongodb.MongoClientSettings;
 import com.mongodb.client.AggregateIterable;
 import com.mongodb.client.MongoCollection;
-import entity.Game;
-import entity.Summoner;
 import org.apache.spark.storage.StorageLevel;
 import org.apache.spark.streaming.receiver.Receiver;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.PojoCodecProvider;
+import yjslol.entity.Game;
+import yjslol.entity.Summoner;
+import yjslol.mongo.MongoDBUtil;
 
 import java.util.*;
 
@@ -46,10 +49,9 @@ public class MongoDBReceiver extends Receiver<Game> {
 
     @Override
     public void onStop() {
-
     }
 
-    public void readBD() {
+    private void readBD() {
         try {
             CodecRegistry pojoCodecRegistry = fromRegistries(MongoClientSettings.getDefaultCodecRegistry(),
                     fromProviders(PojoCodecProvider.builder().automatic(true).build()));
@@ -90,7 +92,7 @@ public class MongoDBReceiver extends Receiver<Game> {
                                         project(
                                                 fields(
                                                         excludeId(),
-                                                        include("sid", "sname", "rank"),
+                                                        include("sid", "sname", "pos", "rank"),
                                                         computed(
                                                                 "games",
                                                                 new Document(

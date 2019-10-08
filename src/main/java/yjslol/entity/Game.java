@@ -1,4 +1,4 @@
-package entity;
+package yjslol.entity;
 
 import java.io.Serializable;
 
