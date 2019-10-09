@@ -60,22 +60,19 @@ public class MongoDBReceiver extends Receiver<Game> {
                     .withCodecRegistry(pojoCodecRegistry);
 
             List<Game> games = new ArrayList<>(2800);
+            Document filterDoc;
             while (!isStopped()) {
-                Document filterDoc =
-                        new Document("input", "$games")
-                                .append("as", "game")
-                                .append("cond",
-                                        new Document(
+                filterDoc =
+                        new Document("input", "$games").append("as", "game")
+                                .append("cond", new Document(
                                                 "$and",
-                                                Arrays.asList(
-                                                        new Document(
+                                                Arrays.asList(new Document(
                                                                 "$gt",
                                                                 Arrays.asList(
                                                                         "$$game.time",
                                                                         prevTime
                                                                 )
-                                                        ),
-                                                        new Document(
+                                                        ), new Document(
                                                                 "$lte",
                                                                 Arrays.asList(
                                                                         "$$game.time",
@@ -130,5 +127,9 @@ public class MongoDBReceiver extends Receiver<Game> {
             t.printStackTrace();
             restart("获取数据出错", t);
         }
+    }
+
+    public int getTillTime() {
+        return tillTime;
     }
 }

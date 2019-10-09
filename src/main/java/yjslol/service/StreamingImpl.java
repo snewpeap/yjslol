@@ -31,6 +31,7 @@ import static yjslol.mongo.MongoDBUtil.COLLECTION_STREAMING;
 @Service
 public class StreamingImpl implements Streaming, Serializable {
     private static boolean isRunning = false;
+    private MongoDBReceiver mongoDBReceiver = new MongoDBReceiver(0, 1556985600);
 
     @PostConstruct
     private void constructed() {
@@ -66,7 +67,7 @@ public class StreamingImpl implements Streaming, Serializable {
             ChampionUsageRes championUsageRes = new ChampionUsageRes();
             championUsageRes.setMap(pairs);
             int second = Integer.valueOf(String.valueOf(System.currentTimeMillis() / 1000));
-            championUsageRes.setTimestamp(second);
+            championUsageRes.setTimestamp(mongoDBReceiver.getTillTime());
             return championUsageRes;
         }
     }
@@ -74,12 +75,12 @@ public class StreamingImpl implements Streaming, Serializable {
     private void run() {
         isRunning = true;
         try {
-            SparkConf conf = new SparkConf().setMaster("local[2]").setAppName("yjslol-streaming");
+            SparkConf conf = new SparkConf().setMaster("local[3]").setAppName("yjslol-streaming");
             JavaStreamingContext jsc = new JavaStreamingContext(conf, Durations.seconds(3));
             jsc.checkpoint("./checkpoint/");
 
             JavaDStream<Game> gamsStream =
-                    jsc.receiverStream(new MongoDBReceiver(0, 1556985600)); //2019-05-05 00:00:00
+                    jsc.receiverStream(mongoDBReceiver); //2019-05-05 00:00:00
 
 //            JavaPairDStream<String, Integer> championOnePairs =
 //                    gamsStream.mapToPair(game -> new Tuple2<>(game.getChampion_name(), 1));
@@ -104,7 +105,7 @@ public class StreamingImpl implements Streaming, Serializable {
 
                                 return Optional.of(newSum);
                             }
-                    );
+                    ).persist();
 
             championCounts.foreachRDD(rdd -> rdd.foreachPartitionAsync(
                     records -> {
