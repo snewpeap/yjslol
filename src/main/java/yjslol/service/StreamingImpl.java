@@ -66,7 +66,7 @@ public class StreamingImpl implements Streaming, Serializable {
                     .forEach((Consumer<? super ChampionCountPair>) pairs::add);
             ChampionUsageRes championUsageRes = new ChampionUsageRes();
             championUsageRes.setMap(pairs);
-            championUsageRes.setTimestamp(mongoDBReceiver.getTillTime());
+            championUsageRes.setTimestamp(mongoDBReceiver.getTillTime() * 1000);
             return championUsageRes;
         }
     }
