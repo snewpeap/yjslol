@@ -66,7 +66,6 @@ public class StreamingImpl implements Streaming, Serializable {
                     .forEach((Consumer<? super ChampionCountPair>) pairs::add);
             ChampionUsageRes championUsageRes = new ChampionUsageRes();
             championUsageRes.setMap(pairs);
-            int second = Integer.valueOf(String.valueOf(System.currentTimeMillis() / 1000));
             championUsageRes.setTimestamp(mongoDBReceiver.getTillTime());
             return championUsageRes;
         }
@@ -76,7 +75,7 @@ public class StreamingImpl implements Streaming, Serializable {
         isRunning = true;
         try {
             SparkConf conf = new SparkConf().setMaster("local[3]").setAppName("yjslol-streaming");
-            JavaStreamingContext jsc = new JavaStreamingContext(conf, Durations.seconds(3));
+            JavaStreamingContext jsc = new JavaStreamingContext(conf, Durations.seconds(4));
             jsc.checkpoint("./checkpoint/");
 
             JavaDStream<Game> gamsStream =
@@ -128,6 +127,7 @@ public class StreamingImpl implements Streaming, Serializable {
 //                    .mapToPair(Tuple2::swap)
 //                    .transformToPair(s -> s.sortByKey(false))
 //                    .mapToPair(Tuple2::swap).print(5);
+            championCounts.print(2);
 
             jsc.start();
             jsc.awaitTermination();

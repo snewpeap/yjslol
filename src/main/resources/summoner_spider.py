@@ -42,12 +42,15 @@ def highest_spider():
         #     'tier': tier
         # })
         s = games_collection.find_one(
-                    {'sid': sid}
-                )
+            {'sid': sid}
+        )
 
         reach_end = False
         if s != None and dict(s).get('reach_end') != None:
             reach_end = dict(s).get('reach_end')
+
+
+        latest_game_time = dict(s).get('latest_game_time') if (s != None and dict(s).get('latest_game_time') != None) else 0
 
         games_collection.update_one(
             {'sid': sid},
@@ -57,7 +60,7 @@ def highest_spider():
                 'rank': int(rank.strip()),
                 'tier': tier,
                 'updateAt': updateTime,
-                'latest_game_time': 0,
+                'latest_game_time': latest_game_time,
                 'reach_end': reach_end
             }},
             upsert=True
@@ -98,6 +101,8 @@ def spider():
                 if s != None and dict(s).get('reach_end') != None:
                     reach_end = dict(s).get('reach_end')
 
+                latest_game_time = dict(s).get('latest_game_time') if (s != None and dict(s).get('latest_game_time') != None) else 0
+
                 games_collection.update_one(
                     {'sid': sid},
                     {'$set': {
@@ -106,7 +111,7 @@ def spider():
                         'rank': int(rank.strip()),
                         'tier': tier,
                         'updateAt': updateTime,
-                        'latest_game_time': 0,
+                        'latest_game_time': latest_game_time,
                         'reach_end': reach_end
                     }},
                     upsert=True

@@ -12,6 +12,7 @@ import yjslol.entity.Game;
 import yjslol.entity.Summoner;
 import yjslol.mongo.MongoDBUtil;
 
+import java.io.Serializable;
 import java.util.*;
 
 import static com.mongodb.client.model.Aggregates.project;
@@ -19,9 +20,9 @@ import static com.mongodb.client.model.Projections.*;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 
-public class MongoDBReceiver extends Receiver<Game> {
-    private int prevTime;
-    private int tillTime;
+public class MongoDBReceiver extends Receiver<Game> implements Runnable {
+//    private int prevTime;
+//    private int tillTime;
 
     public MongoDBReceiver(StorageLevel storageLevel) {
         super(storageLevel);
@@ -36,22 +37,23 @@ public class MongoDBReceiver extends Receiver<Game> {
     }
 
     public MongoDBReceiver(int prevTime, int tillTime) {
-        super(StorageLevel.MEMORY_AND_DISK_2());
+        super(StorageLevel.MEMORY_AND_DISK());
 
-        this.prevTime = prevTime;
-        this.tillTime = tillTime;
+        TimeHolder.prevTime = prevTime;
+        TimeHolder.tillTime = tillTime;
     }
 
     @Override
     public void onStart() {
-        new Thread(this::readBD).start();
+        this.run();
     }
 
     @Override
     public void onStop() {
     }
 
-    private void readBD() {
+    @Override
+    public void run() {
         try {
             CodecRegistry pojoCodecRegistry = fromRegistries(MongoClientSettings.getDefaultCodecRegistry(),
                     fromProviders(PojoCodecProvider.builder().automatic(true).build()));
@@ -62,6 +64,8 @@ public class MongoDBReceiver extends Receiver<Game> {
             List<Game> games = new ArrayList<>(2800);
             Document filterDoc;
             while (!isStopped()) {
+                int tt = TimeHolder.tillTime;
+                int pt = TimeHolder.prevTime;
                 filterDoc =
                         new Document("input", "$games").append("as", "game")
                                 .append("cond", new Document(
@@ -70,13 +74,13 @@ public class MongoDBReceiver extends Receiver<Game> {
                                                                 "$gt",
                                                                 Arrays.asList(
                                                                         "$$game.time",
-                                                                        prevTime
+                                                                        pt
                                                                 )
                                                         ), new Document(
                                                                 "$lte",
                                                                 Arrays.asList(
                                                                         "$$game.time",
-                                                                        tillTime
+                                                                        tt
                                                                 )
                                                         )
                                                 )
@@ -111,17 +115,17 @@ public class MongoDBReceiver extends Receiver<Game> {
                     }
                 }
 
-                System.out.println("获取从 " + prevTime + " 到 " + tillTime + " 的对局记录");
+                System.out.println("获取从 " + pt + " 到 " + tt + " 的对局记录");
                 store(games.iterator());
 
-                Thread.sleep(3000);
-
-                games.clear();
-                prevTime = tillTime;
-                tillTime += 2 * 60 * 60;
-                if (tillTime > Integer.valueOf(String.valueOf(System.currentTimeMillis() / 1000))) {
+                if (tt > Integer.valueOf(String.valueOf(System.currentTimeMillis() / 1000))) {
                     stop("超过当前日期，停了吧");
                 }
+                Thread.sleep(2000);
+
+                games.clear();
+                TimeHolder.prevTime = tt;
+                TimeHolder.tillTime += 24 * 60 * 60;
             }
         } catch (Throwable t) {
             t.printStackTrace();
@@ -130,6 +134,11 @@ public class MongoDBReceiver extends Receiver<Game> {
     }
 
     public int getTillTime() {
-        return tillTime;
+        return TimeHolder.tillTime;
+    }
+
+    private static class TimeHolder implements Serializable {
+        static int prevTime;
+        static int tillTime;
     }
 }

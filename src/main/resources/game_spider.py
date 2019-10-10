@@ -37,6 +37,7 @@ async def game_spider(spider_name:str, queue: asyncio.Queue):
         name = s['sname']
         sID = s['sid']
         latest_game_time = s['latest_game_time']
+        t = latest_game_time
         reach_end = s['reach_end']
 
         startInfo = str(int(time.time()))
@@ -48,7 +49,7 @@ async def game_spider(spider_name:str, queue: asyncio.Queue):
                 async with session.get(
                         'https://www.op.gg/summoner/matches/ajax/averageAndList/startInfo='
                         + str(startInfo)+'&summonerId=' +
-                    str(sID) + '&type=soloranked',
+                        str(sID) + '&type=soloranked',
                         headers=header, verify_ssl=False) as game_res:
 
                     print(spider_name+': crawl for ('+name+')')
@@ -81,7 +82,7 @@ async def game_spider(spider_name:str, queue: asyncio.Queue):
 
                             # 游戏市场：秒数
                             game_length = str(game.div.div.contents[4].string)[
-                                :-1].split('分 ')
+                                          :-1].split('分 ')
                             game_length = int(
                                 game_length[0])*60+int(game_length[1])
 
@@ -119,7 +120,7 @@ async def game_spider(spider_name:str, queue: asyncio.Queue):
                                         pos = POS[i]
 
                             print(spider_name+': game'+game_id+"@"+str(game_time)+' len=' + str(game_length) + 's ' +
-                                game_result+' 英雄:'+champion_name+'-'+pos+' KDA='+kda+' cs='+str(cs)+' wards='+str(wards))
+                                  game_result+' 英雄:'+champion_name+'-'+pos+' KDA='+kda+' cs='+str(cs)+' wards='+str(wards))
                             ret_list.append({
                                 'gid': game_id,
                                 'time': game_time,
@@ -134,29 +135,22 @@ async def game_spider(spider_name:str, queue: asyncio.Queue):
                                 'wards': wards
                             })
 
-                        print(spider_name+': ('+name+') got ' + str(game_total) + ' games')
                         games_collection.update_one(
                             {'sid': sID},
                             {'$addToSet': {'games': {'$each': ret_list}}}
                         )
-                        if reach_crawled:
-                            if firstRound and len(ret_list) > 0:
-                                t = ret_list[0]['time']
-                                games_collection.update_one(
-                                    {'sid': sID},
-                                    {'$set': {
-                                        'latest_game_time': t}}
-                                )
-                            break
-                        elif firstRound and len(ret_list) > 0:
+                        if firstRound and len(ret_list) > 0:
                             t = ret_list[0]['time']
+                            firstRound = False
+                        if reach_crawled:
                             games_collection.update_one(
                                 {'sid': sID},
                                 {'$set': {
                                     'latest_game_time': t}}
                             )
-                            latest_game_time = t
-                            firstRound = False
+                            break
+
+                        print(spider_name+': ('+name+') got ' + str(game_total) + ' games')
                         ret_list = []
 
                     elif game_res.status == 418:
@@ -167,11 +161,11 @@ async def game_spider(spider_name:str, queue: asyncio.Queue):
                         break
                     else:
                         logging.warn(spider_name+': Something went wrong: ' +
-                                    str(game_res.status))
+                                     str(game_res.status))
                         break
-        
+
         print("________________________" + spider_name + " got total " +
-            str(game_total)+" games for " + name + "________________________\n")
+              str(game_total)+" games for " + name + "________________________\n")
         queue.task_done()
 
 async def main(l:list):
