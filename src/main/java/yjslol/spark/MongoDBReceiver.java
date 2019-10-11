@@ -121,7 +121,7 @@ public class MongoDBReceiver extends Receiver<Game> implements Runnable {
                 if (tt > Integer.valueOf(String.valueOf(System.currentTimeMillis() / 1000))) {
                     stop("超过当前日期，停了吧");
                 }
-                Thread.sleep(2000);
+                Thread.sleep(1000);
 
                 games.clear();
                 TimeHolder.prevTime = tt;
