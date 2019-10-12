@@ -8,3 +8,4 @@ target/
 .classpath
 
 checkpoint/
+src/main/resources/frontend/.idea
