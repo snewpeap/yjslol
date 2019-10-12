@@ -1,10 +1,10 @@
-let heros;
+let heros = [];
 $.getJSON("hero.json",function (hero) {
     heros = hero;
 });
 
 let href = window.location.href;
-let loc = "#" + href.split("/")[4].split(".")[0];
+let loc = "#" + href.split("/")[5].split(".")[0];
 let li = document.querySelector(loc);
 li.classList.add("active");
 
@@ -42,11 +42,145 @@ let dayOrXun = 0;
 let tenDaysRecord = [];
 let day = 0;
 let xunDaysRecord = [];
+let allData = [[],[],[],[],[]];
+let allTime = [];
+let achart = echarts.init(document.getElementById("streaming-graph"));
+let option = {
+    grid: {
+        left: '3%',
+        right: '4%',
+        bottom: '3%',
+        containLabel: true
+    },
+    xAxis : [
+        {
+            type : 'category',
+            data : [],
+            axisTick: {
+                alignWithLabel: true
+            }
+        }
+    ],
+    yAxis:{
+        type:'value',
+        min:0
+    },
+    series:[]
+};
+let champions = [];
 
-setInterval(getData,300);
+
+setInterval(newGetData,777);
+
+function newGetData() {
+    if (champions.length === 0){
+        for (let hero in heros){
+            champions[heros[hero]['name']] = heros[hero]['alias'];
+            champions.length+=1;
+        }
+    }
+    let stream = updateStreaming(
+        lastTimeStamp,
+        function (res) {
+            console.error('失败了！');
+            stream = res;
+        }
+    );
+
+    if (stream !== undefined && stream != null && stream !== ""){
+        lastTimeStamp = stream.timestamp;
+        let formattedTime = new Date(stream.timestamp * 1000).toLocaleString().split(" ")[0];
+        allTime.push(formattedTime);
+        let data = stream['map'];
+        for (let ind = 0;ind<data.length;ind++){
+            let posData = allData[positionDict2[data[ind].pos]];
+            if (!posData.hasOwnProperty(data[ind].cname)){
+                posData[data[ind].cname]=[];
+                posData.length++;
+                // posData.push(data[ind].cname);
+                for (let i = 0;i<allTime.length-1;i++){
+                    posData[data[ind].cname].push(0);
+                }
+                // achart.setOption({
+                //     series:achart
+                // })
+            }
+            posData[data[ind].cname].push(data[ind].count);
+        }
+        // newDraw()
+        option.xAxis[0].data.push(formattedTime);
+        option.yAxis.min = option.xAxis[0].data.length * 5;
+        let mySeries = [];
+        let posData = allData[positionNow];
+        for (let d in posData){
+            let dataMapped = posData[d].map(function (item) {
+                return {value:item,symbol:'none'}
+            });
+            dataMapped.push({
+                value:dataMapped.pop()['value'],
+                symbol:'image://https://game.gtimg.cn/images/lol/act/img/champion/'+champions[d]+'.png',
+                symbolSize:25,
+                label:{
+                    show:true,
+                    position:'right',
+                    distance:10,
+                    formatter:function (param) {
+                        return param.seriesName;
+                    }
+                }
+            });
+            mySeries.push({
+                name:d,
+                type:'line',
+                animation:false,
+                data:dataMapped
+            });
+
+        }
+        option.series = mySeries;
+        achart.setOption(option)
+    }
+}
+
+function newDraw() {
+    let mySeries = [];
+    let posData = allData[positionNow];
+    for (let d in posData){
+        mySeries.push({
+            name:d,
+            type:'line',
+            data:posData[d]
+        });
+    }
+    let option = {
+        grid: {
+            left: '3%',
+            right: '4%',
+            bottom: '3%',
+            containLabel: true
+        },
+        xAxis : [
+            {
+                type : 'category',
+                data : allTime,
+                axisTick: {
+                    alignWithLabel: true
+                }
+            }
+        ],
+        yAxis:{
+            type:'value'
+        },
+        series:mySeries
+    };
+
+    let graph = echarts.init(document.getElementById("streaming-graph"));
+    graph.setOption(option);
+}
 
 function getData(){
     let stream = updateStreaming(
+        lastTimeStamp,
         function (res) {
             console.log('失败了！');
             stream = res;

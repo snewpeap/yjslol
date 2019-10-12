@@ -122,7 +122,7 @@ public class MongoDBReceiver extends Receiver<Game> {
                 System.out.println("获取从 " + pt + " 到 " + tt + " 的对局记录");
                 store(games.iterator());
 
-                Thread.sleep(1800);
+                Thread.sleep(1500);
 
                 games.clear();
                 TimeHolder.prevTime = tt;

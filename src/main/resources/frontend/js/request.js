@@ -1,8 +1,8 @@
-function updateStreaming(onError) {
+function updateStreaming(lastT,onError) {
     let a = [];
     $.ajax({
         type:'GET',
-        url:'http://localhost:8196/streaming/champion/current',
+        url:'http://localhost:8196/streaming/champion/current?lastT='+lastT,
         async:false,
         success:function (res) {
             a = res;

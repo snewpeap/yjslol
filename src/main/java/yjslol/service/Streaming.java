@@ -5,7 +5,7 @@ import yjslol.entity.ChampionUsageRes;
 public interface Streaming {
     boolean start();
 
-    ChampionUsageRes getCurrentChampionUsage(String pos);
+    ChampionUsageRes getCurrentChampionUsage(Integer lastT);
 
     enum POS{
         TOP("上单"),

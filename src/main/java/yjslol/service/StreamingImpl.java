@@ -30,12 +30,13 @@ import static yjslol.mongo.MongoDBUtil.COLLECTION_STREAMING;
 
 @Service
 public class StreamingImpl implements Streaming, Serializable {
-//    private static boolean isRunning = false;
-    private MongoDBReceiver mongoDBReceiver = new MongoDBReceiver(0, 1556985600);
+    //    private static boolean isRunning = false;
+    private MongoDBReceiver mongoDBReceiver = new MongoDBReceiver(1, 1556985600);
 
     @PostConstruct
     private void constructed() {
         MongoDBUtil.getCollection(COLLECTION_STREAMING, ChampionCountPair.class).drop();
+        RunStatHolder.tillTime = 0;
         start();
     }
 
@@ -50,24 +51,24 @@ public class StreamingImpl implements Streaming, Serializable {
     }
 
     @Override
-    public ChampionUsageRes getCurrentChampionUsage(String pos) {
+    public ChampionUsageRes getCurrentChampionUsage(Integer lastT) {
         if (!RunStatHolder.isRunning) {
             return null;
         } else {
-            List<ChampionCountPair> pairs = new ArrayList<>();
-            FindIterable<ChampionCountPair> findIterable;
-            if (pos == null || pos.isEmpty()) {
-                findIterable = MongoDBUtil.getCollection(COLLECTION_STREAMING, ChampionCountPair.class).find();
+            if (lastT == null || lastT >= RunStatHolder.tillTime) {
+                return null;
             } else {
-                findIterable = MongoDBUtil.getCollection(COLLECTION_STREAMING, ChampionCountPair.class)
-                        .find(eq("pos", POS.valueOf(pos.toUpperCase()).pos));
+                FindIterable<ChampionCountPair> findIterable;
+                findIterable = MongoDBUtil.getCollection(COLLECTION_STREAMING, ChampionCountPair.class).find();
+
+                List<ChampionCountPair> pairs = new ArrayList<>();
+                findIterable.sort(Sorts.descending("count"))
+                        .forEach((Consumer<? super ChampionCountPair>) pairs::add);
+                ChampionUsageRes championUsageRes = new ChampionUsageRes();
+                championUsageRes.setMap(pairs);
+                championUsageRes.setTimestamp(mongoDBReceiver.getTillTime());
+                return championUsageRes;
             }
-            findIterable.sort(Sorts.descending("count"))
-                    .forEach((Consumer<? super ChampionCountPair>) pairs::add);
-            ChampionUsageRes championUsageRes = new ChampionUsageRes();
-            championUsageRes.setMap(pairs);
-            championUsageRes.setTimestamp(mongoDBReceiver.getTillTime());
-            return championUsageRes;
         }
     }
 
@@ -75,7 +76,7 @@ public class StreamingImpl implements Streaming, Serializable {
         RunStatHolder.isRunning = true;
         try {
             SparkConf conf = new SparkConf().setMaster("local[3]").setAppName("yjslol-streaming");
-            JavaStreamingContext jsc = new JavaStreamingContext(conf, Durations.milliseconds(3500));
+            JavaStreamingContext jsc = new JavaStreamingContext(conf, Durations.milliseconds(3700));
             jsc.checkpoint("./checkpoint/");
 
             JavaDStream<Game> gamsStream =
@@ -107,21 +108,24 @@ public class StreamingImpl implements Streaming, Serializable {
                             }
                     ).persist();
 
-            championCounts.foreachRDD(rdd -> rdd.foreachPartitionAsync(
-                    records -> {
-                        while (records.hasNext()) {
-                            Tuple2<Tuple2<String, String>, Integer> t = records.next();
-                            ChampionCountPair pair = new ChampionCountPair();
-                            pair.setCname(t._1._1);
-                            pair.setPos(t._1._2);
-                            pair.setCount(t._2);
-                            MongoDBUtil.getCollection(COLLECTION_STREAMING, ChampionCountPair.class).replaceOne(
-                                    and(eq("cname", pair.getCname()), eq("pos", pair.getPos())),
-                                    pair,
-                                    new ReplaceOptions().upsert(true)
-                            );
-                        }
-                    })
+            championCounts.foreachRDD(rdd -> {
+                        rdd.foreachPartition(
+                                records -> {
+                                    while (records.hasNext()) {
+                                        Tuple2<Tuple2<String, String>, Integer> t = records.next();
+                                        ChampionCountPair pair = new ChampionCountPair();
+                                        pair.setCname(t._1._1);
+                                        pair.setPos(t._1._2);
+                                        pair.setCount(t._2);
+                                        MongoDBUtil.getCollection(COLLECTION_STREAMING, ChampionCountPair.class).replaceOne(
+                                                and(eq("cname", pair.getCname()), eq("pos", pair.getPos())),
+                                                pair,
+                                                new ReplaceOptions().upsert(true)
+                                        );
+                                    }
+                                });
+                        RunStatHolder.tillTime = mongoDBReceiver.getTillTime();
+                    }
             );
 
 //            championCounts
@@ -140,7 +144,8 @@ public class StreamingImpl implements Streaming, Serializable {
     }
 
 
-    private static class RunStatHolder{
+    private static class RunStatHolder {
         static boolean isRunning;
+        static int tillTime;
     }
 }

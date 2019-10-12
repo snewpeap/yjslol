@@ -13,8 +13,8 @@ public class StreamingController {
     private Streaming streaming;
 
     @GetMapping("/streaming/champion/current")
-    public ChampionUsageRes getChampionUsage(@RequestParam(required = false) String pos) {
-        return streaming.getCurrentChampionUsage(pos);
+    public ChampionUsageRes getChampionUsage(@RequestParam(required = false) Integer lastT) {
+        return streaming.getCurrentChampionUsage(lastT);
     }
 
     @PostMapping("/streaming/start")
