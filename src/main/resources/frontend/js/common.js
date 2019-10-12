@@ -10,7 +10,7 @@ let items = document.querySelectorAll('.nav li');
             child.classList.remove("active");
         });
         this.classList.add("active");
-        window.location.href = "/spark/" + item.innerText.toLowerCase() + ".html";
+        window.location.href = "/frontend/" + item.innerText.toLowerCase() + ".html";
     });
 });
 
