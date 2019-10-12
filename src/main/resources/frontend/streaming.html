@@ -1,0 +1,61 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,user-scalable=no" />
+
+    <title>streaming读取分析英雄使用率</title>
+
+    <link rel="stylesheet" type="text/css" href="css/common.css">
+    <link rel="stylesheet" type="text/css" href="css/streaming.css">
+</head>
+
+<body>
+    <div class="head">
+        <img src="./img/logo-user.jpg" alt="logo" class="user-logo">
+        <div class="user-name">
+            <p>四六开</p>
+            <div class="user-status">
+                <div class="user-status-icon"></div>
+                <p>在线</p>
+            </div>
+        </div>
+        <span>Team Name Cannot Be Empty</span>
+        <img src="./img/logo-public.png" alt="logo" class="head-logo">
+    </div>
+    <div class="sidebar">
+        <ul class="nav">
+            <li id="streaming"><a href="#">Streaming</a></li>
+            <li id="graphx"><a href="/spark/graphx.html">GraphX</a></li>
+            <li id="mllib"><a href="/spark/mllib.html">MLlib</a></li>
+        </ul>
+    </div>
+    <div class="content">
+        <div id="content-head">
+            <ul id="position-group">
+                <li id="top" class="active">TOP</li>
+                <li id="jug">JUG</li>
+                <li id="mid">MID</li>
+                <li id="adc">ADC</li>
+                <li id="sup">SUP</li>
+            </ul>
+            <ul id="day-group">
+                <li id="day" class="active">日</li>
+                <div class="bar"></div>
+                <li id="xun">旬</li>
+
+            </ul>
+        </div>
+        <div style="display: flex;margin-left: 72px">
+            <ul id="top-ten-hero">
+            </ul>
+            <div id="streaming-graph"></div>
+        </div>
+    </div>
+
+    <script type="text/javascript" src='./js/echarts.js'></script>
+    <script type="text/javascript" src="./js/jquery.js"></script>
+    <script type="text/javascript" src="./js/request.js"></script>
+    <script type="text/javascript" src='./js/common.js'></script>
+    <script type="text/javascript" src='./js/streaming.js'></script>
+</body>
+</html>

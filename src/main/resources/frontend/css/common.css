@@ -1,0 +1,112 @@
+body{
+    background-color: #000000;
+    margin: 0;
+}
+
+/*
+    设置顶部
+ */
+.head {
+    background-color: #000000;
+    position: absolute;
+    left: 0; right: 0;
+    height: 80px;
+    display: flex;
+}
+.user-logo{
+    height: 48px;
+    width: 48px;
+    margin: 16px 10px 8px 20px;
+    border: solid 4px #ffffff;
+    border-radius: 50%;
+}
+.user-name > p{
+    color: #ffffff;
+    font-family: STKaiti,serif;
+    font-size: 24px;
+    font-weight: bold;
+    margin: 26px 0 2px;
+}
+.user-status{
+    display: flex;
+}
+.user-status p{
+    font-family: STKaiti,serif;
+    font-size: 13px;
+    color: #0aad3b;
+    margin: 4px 0 0;
+}
+.user-status-icon{
+    background-color: #0aad3b;
+    height: 8px;
+    width: 8px;
+    margin: 5px 4px 4px 0;
+    border: 1px solid #6db182;
+    border-radius: 50%;
+}
+.head span{
+    font-size: 36px;
+    line-height: 36px;
+    color: #dec77b;
+    margin: auto;
+    font-family: "Chalkduster", serif;
+}
+.head-logo{
+    margin: 12px 0 8px;
+}
+
+/*
+    设置侧边栏
+ */
+.sidebar {
+    background-color: #000000;
+    position: absolute;
+    left: 0; top: 80px; bottom: 0;
+    width: 178px;
+}
+.sidebar h1{
+    text-align: center;
+    color: #ffffff;
+}
+.nav {
+    list-style: none;
+    position: absolute;
+    left: 0;right: 0;
+    padding: 100px 0 0;
+}
+.nav a:link{color: #ffffff;}
+.nav a:visited {color: #ffffff;}
+.nav a:hover {color: #ffffff;}
+.nav li {
+    text-align: center;
+    padding: 32px 0;
+    border-top-left-radius: 5px;
+    border-bottom-left-radius: 5px;
+    border-bottom-width: 0;
+}
+/* 选择最后一个元素 */
+.nav li:last-child {border-bottom-width: 1px}
+.nav a {
+    text-decoration: none;
+    font-family: 'Noteworthy', serif;
+    font-size: 20px;
+    font-weight: bold;
+}
+/* 设置active */
+.nav li.active {
+    background-color: #ffffff;
+    border-right-width: 0;
+}
+.active a{
+    color: #000000 !important;
+}
+
+/*
+    设置主内容
+ */
+.content {
+    background-color: #ffffff;
+    border-radius: 5px;
+    position: absolute;
+    left:178px; top: 80px; right: 0; bottom: 0;
+}
