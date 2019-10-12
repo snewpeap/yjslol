@@ -20,7 +20,7 @@ import static com.mongodb.client.model.Projections.*;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 
-public class MongoDBReceiver extends Receiver<Game> implements Runnable {
+public class MongoDBReceiver extends Receiver<Game> {
 //    private int prevTime;
 //    private int tillTime;
 
@@ -45,15 +45,15 @@ public class MongoDBReceiver extends Receiver<Game> implements Runnable {
 
     @Override
     public void onStart() {
-        this.run();
+        new Thread(this::run).start();
     }
 
     @Override
     public void onStop() {
+
     }
 
-    @Override
-    public void run() {
+    private void run() {
         try {
             CodecRegistry pojoCodecRegistry = fromRegistries(MongoClientSettings.getDefaultCodecRegistry(),
                     fromProviders(PojoCodecProvider.builder().automatic(true).build()));
@@ -65,6 +65,10 @@ public class MongoDBReceiver extends Receiver<Game> implements Runnable {
             Document filterDoc;
             while (!isStopped()) {
                 int tt = TimeHolder.tillTime;
+                if (tt > Integer.valueOf(String.valueOf(System.currentTimeMillis() / 1000))) {
+                    stop("超过当前日期，停了吧!");
+                }
+
                 int pt = TimeHolder.prevTime;
                 filterDoc =
                         new Document("input", "$games").append("as", "game")
@@ -118,10 +122,7 @@ public class MongoDBReceiver extends Receiver<Game> implements Runnable {
                 System.out.println("获取从 " + pt + " 到 " + tt + " 的对局记录");
                 store(games.iterator());
 
-                if (tt > Integer.valueOf(String.valueOf(System.currentTimeMillis() / 1000))) {
-                    stop("超过当前日期，停了吧");
-                }
-                Thread.sleep(2000);
+                Thread.sleep(1800);
 
                 games.clear();
                 TimeHolder.prevTime = tt;

@@ -30,7 +30,7 @@ import static yjslol.mongo.MongoDBUtil.COLLECTION_STREAMING;
 
 @Service
 public class StreamingImpl implements Streaming, Serializable {
-    private static boolean isRunning = false;
+//    private static boolean isRunning = false;
     private MongoDBReceiver mongoDBReceiver = new MongoDBReceiver(0, 1556985600);
 
     @PostConstruct
@@ -41,7 +41,7 @@ public class StreamingImpl implements Streaming, Serializable {
 
     @Override
     public boolean start() {
-        if (isRunning) {
+        if (RunStatHolder.isRunning) {
             return false;
         } else {
             new Thread(this::run).start();
@@ -51,7 +51,7 @@ public class StreamingImpl implements Streaming, Serializable {
 
     @Override
     public ChampionUsageRes getCurrentChampionUsage(String pos) {
-        if (!isRunning) {
+        if (!RunStatHolder.isRunning) {
             return null;
         } else {
             List<ChampionCountPair> pairs = new ArrayList<>();
@@ -66,20 +66,21 @@ public class StreamingImpl implements Streaming, Serializable {
                     .forEach((Consumer<? super ChampionCountPair>) pairs::add);
             ChampionUsageRes championUsageRes = new ChampionUsageRes();
             championUsageRes.setMap(pairs);
-            championUsageRes.setTimestamp(mongoDBReceiver.getTillTime() * 1000);
+            championUsageRes.setTimestamp(mongoDBReceiver.getTillTime());
             return championUsageRes;
         }
     }
 
     private void run() {
-        isRunning = true;
+        RunStatHolder.isRunning = true;
         try {
             SparkConf conf = new SparkConf().setMaster("local[3]").setAppName("yjslol-streaming");
-            JavaStreamingContext jsc = new JavaStreamingContext(conf, Durations.seconds(4));
+            JavaStreamingContext jsc = new JavaStreamingContext(conf, Durations.milliseconds(3500));
             jsc.checkpoint("./checkpoint/");
 
             JavaDStream<Game> gamsStream =
                     jsc.receiverStream(mongoDBReceiver); //2019-05-05 00:00:00
+
 
 //            JavaPairDStream<String, Integer> championOnePairs =
 //                    gamsStream.mapToPair(game -> new Tuple2<>(game.getChampion_name(), 1));
@@ -132,9 +133,14 @@ public class StreamingImpl implements Streaming, Serializable {
             jsc.start();
             jsc.awaitTermination();
             jsc.stop();
-        } catch (Exception e) {
-            isRunning = false;
+        } catch (Throwable e) {
             e.printStackTrace();
+            RunStatHolder.isRunning = false;
         }
+    }
+
+
+    private static class RunStatHolder{
+        static boolean isRunning;
     }
 }
